@@ -12,6 +12,37 @@ position sizing.
 Full result: `results/findings.json`, and the write-up in
 `docs/findings.md`.
 
+## Results at a glance
+
+| | |
+|---|---|
+| Spot sessions | 570 (2024-01-01 → 2026-05-05) |
+| Option sessions matched | 353, across 73 weekly expiries |
+| Option legs priced | 54,275 |
+| Design / in-sample / holdout | 2024 / 2025 / Jan–May 2026 (locked) |
+| Inference | day-clustered bootstrap throughout |
+
+**Every long-premium arm loses money, in-sample and out of sample:**
+
+![Every long-premium arm loses money, both periods](docs/img/daily_arms.png)
+
+**The one thing that survives — channel width forecasts the next move's size, and it holds up on data the cut points never saw:**
+
+![Channel width forecasts range, holds out of sample](docs/img/width_signal.png)
+
+**The short-premium extension (iron condor) looked like the answer — until its own holdout:**
+
+![Iron condor equity curve, strong in-sample then negative in 2026](docs/img/ic_equity_curves.png)
+
+| Arm | 2025 (in-sample) | 2026 YTD (holdout) |
+|---|---:|---:|
+| IC blind | +₹172,572 | −₹128,239 |
+| + hedge 1x | +₹440,506 | −₹136,574 |
+| + hedge 2x | +₹726,092 | −₹138,490 |
+| + hedge 3x | +₹1,011,681 | −₹140,405 |
+
+More hedge means a bigger 2025 gain *and* a bigger 2026 loss — that's what added gross exposure looks like, not what a hedge looks like. Full context, including the unexplained config selection this table is built on, is in `docs/findings.md`.
+
 ## Data you need to supply
 
 Not bundled. Both come from the weekly Zerodha archives `YYYYMMDD.zip`
