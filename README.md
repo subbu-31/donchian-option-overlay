@@ -1,61 +1,90 @@
 # Donchian + option-buying overlay — a falsification study
 
-**The question:** does a Donchian channel breakout — a popular retail signal —
-generate real alpha once it's overlaid with an actual weekly NIFTY option and
-priced against real bars and real Zerodha costs, rather than assumed on paper?
+## Abstract
 
-**The method:** build the breakout signal causally (no lookahead, proven by a
-placebo that deliberately breaks that rule), price every leg against real
-1-minute option data, hold out 2026 and never touch it until every cut point
-was fixed on 2025, and run inference clustered by day rather than by
-observation.
+The Donchian channel breakout is one of the oldest trend-following ideas in
+retail trading: wait for price to clear its recent high or low, and treat
+that as the start of a move worth riding. It is also, on the NIFTY weekly
+options market, worth precisely nothing. This study builds the signal
+correctly, prices it against a real weekly option rather than an assumed
+payoff, and finds no version of "buy a straddle when the channel breaks"
+that survives its own holdout. What does survive is a narrower claim: the
+channel's *width* forecasts how large the next move will be, even though it
+says nothing about which direction. A second, independent test of the
+opposite idea — selling premium instead of buying it — looked profitable
+in-sample and reversed sign the moment it met data it had not been fitted
+to, which is offered here less as a second finding than as a demonstration
+of what an unvalidated backtest looks like before it is validated.
 
-**The answer: no.** The breakout carries no directional information, the
-channel's volatility information is already priced into the option, and every
-long-premium arm tested loses money in both the in-sample and holdout periods.
-The one thing that survives is the channel's *width* as a forecast of the next
-move's size — a sizing input, not a trading signal on its own.
+## 1. Introduction
 
-**Then what happened:** dropping the long-premium idea and testing the mirror
-trade — selling premium instead of buying it, via an iron condor — produced a
-strong-looking equity curve in-sample that reversed sign the moment it met its
-own holdout. That reversal is itself the more interesting result: a case study
-in what an unvalidated backtest looks like right up until it isn't, and why
-the discipline in the method above (locked holdout, day-clustered inference,
-placebo checks) exists in the first place.
+Retail option-selling and option-buying communities in India both treat the
+Donchian channel as a timing device — a rule for deciding *when* to put on a
+position, layered on top of whatever structure (a bought straddle, a sold
+strangle, an iron condor) the trader already favours. The appeal is
+obvious: it is simple, it is causal by construction, and a quick look at a
+chart usually finds a few breakouts that were followed by a clean move. The
+question this project asks is whether that appeal survives contact with
+real prices. A breakout signal is not the same thing as a trading result —
+between the two sit an option that must actually be bought at a real quoted
+price, a bid-ask spread and a brokerage bill that must actually be paid, and
+a sample of history that must not have been mined for the rule that happens
+to have worked.
 
-Full result: `results/findings.json`, and the write-up in
-`docs/findings.md`.
+The approach taken here is adversarial toward the strategy rather than
+sympathetic to it: build the signal first without knowing whether it will
+sell straddles or buy them, split the data into a design period, an
+in-sample period, and a holdout that is never touched until every choice is
+already frozen, and prefer a null result honestly reported over a positive
+one that has not been checked for the ways backtests usually lie.
 
-## Two acts, in the order the code runs them
+## 2. Data and method
 
-| | |
-|---|---|
-| Spot sessions | 570 (2024-01-01 → 2026-05-05) |
-| Option sessions matched | 353, across 73 weekly expiries |
-| Option legs priced | 54,275 |
-| Design / in-sample / holdout | 2024 / 2025 / Jan–May 2026 (locked) |
-| Inference | day-clustered bootstrap throughout |
+The dataset covers 570 NIFTY 50 spot sessions from January 2024 through
+early May 2026, with real option coverage — 1-minute bars, 54,275
+near-the-money legs — for 353 of those sessions across 73 weekly expiries.
+2024 exists only in spot form and is used to fix every structural choice
+(window length, holding period) before a single option price is looked at;
+2025 is the in-sample year in which the priced strategies are evaluated;
+the first four-plus months of 2026 are held out and touched only after
+every cut point from 2025 is locked in.
 
-**Act 1 — `scripts/core/` (01-10): does the long-premium overlay work?** Build
-the signal on spot alone, then price it against a real option, then check
-whether anything survives the checking.
+The channel itself is built causally: at any point in the session it is
+defined only by bars strictly before it, and a companion check that
+deliberately breaks this rule and looks forward instead produces a result
+an order of magnitude larger than the honest one, confirming the pipeline
+is not accidentally leaking information it shouldn't have. Every simulated
+trade pays the full Zerodha cost stack — brokerage, STT, exchange charge,
+SEBI fee, stamp duty, GST, and slippage — applied at the rates actually in
+force on that date, since several of these rates changed materially over
+the sample period. Because a single trading session produces many
+correlated observations rather than independent ones, all statistical
+inference is computed with a bootstrap that resamples whole days, not
+individual trades.
 
-**1. Is there a directional edge in the breakout itself, before any option
-touches it?** (`02_spot_grid.py`, `03_event_study.py` — 2024 design sample,
-spot points only, no options collected for 2024 so nothing here could have
-seen 2025 or 2026):
+## 3. Does the breakout carry a signal?
+
+The first and most basic test ignores options entirely and asks whether
+price simply keeps moving in the breakout's direction over the minutes and
+hours that follow, evaluated separately in each of the three periods so
+that a real effect would have to show up more than once:
 
 ![Breakout continuation: no signal at any horizon, any period](docs/img/event_study.png)
 
-No. Not at any forward horizon, in any of the three periods. `04_conditioning.py`
-runs the same question as a 93-cell grid over other conditioning variables in
-the design sample — 5 came back significant at the 5% level, against 4.7
-expected from chance alone.
+It does not, at any of the horizons tested, in any of the three periods.
+The same question was also asked as a grid of 93 conditioning cells over
+other candidate variables in the design period; five came back significant
+at the 5% level, against 4.7 expected from chance alone — indistinguishable
+from noise.
 
-**2. Price it against a real option anyway** (`05_build_option_store.py`
-through `08_daily_arms.py` — 54,275 legs, real 1-minute bars, full Zerodha
-cost stack):
+## 4. Pricing the overlay against a real option
+
+A signal with no measurable edge could still, in principle, make money once
+priced against an option, if the option happened to be systematically
+mispriced relative to what actually followed. Three long-premium
+constructions — a straddle at the breakout, a directional single leg, and a
+short-strangle variant included as a counterpoint — were priced against
+54,275 real option legs and run through the full cost model:
 
 ![Every long-premium arm loses money, both periods](docs/img/daily_arms.png)
 
@@ -63,54 +92,64 @@ cost stack):
 |---|---:|
 | Straddle round-trip cost | 3.79 pts (1.54% of premium) |
 | Clean forward-move placebo, 2,068 events | −0.53 pts (wrong sign, ≈0) |
-| Deliberately leaked placebo, 179 events | −49.95 pts (proves the pipeline isn't leaking) |
+| Deliberately leaked placebo, 179 events | −49.95 pts (confirms the placebo test itself works) |
 
-All three arms lose money in both periods. Costs matter but aren't the whole
-story — even at zero cost the mean move doesn't flip sign, and the leak
-placebo confirms this isn't an artifact of an accidentally forward-looking
-signal.
+Every arm loses money in both the in-sample year and the holdout. Costs are
+real but not decisive — even removing them entirely does not flip the sign
+of the underlying mean move, and the gap between the clean and
+deliberately-leaked placebo confirms the loss is not an artifact of a
+signal that is secretly seeing the future.
 
-**3. Does anything survive?** (`04_conditioning.py`'s Q2, `06`/`07` sorted by
-width quintile) — yes, one thing:
+## 5. The one relationship that survives
+
+One property of the channel does hold up: its width, measured relative to
+the same time of day over the prior twenty sessions, forecasts how large
+the next move will be, in both the in-sample year and on data the design
+choices never saw.
 
 ![Channel width forecasts range, holds out of sample](docs/img/width_signal.png)
 
-The channel's width relative to the same time of day over the prior 20
-sessions forecasts the size of the next move, in-sample and on the 2026
-holdout. It's a sizing input, not a directional edge — the option market
-already prices that same volatility information into the premium, which is
-exactly why buying premium conditioned on width is still a wash.
+This is a sizing input rather than a trading signal in its own right —
+knowing that a big move is coming says nothing about which way it will go —
+and it does not translate into buying premium being profitable, because the
+option market already prices in the same volatility information the
+channel is measuring. The width forecast and the option's implied
+volatility are, in effect, two views of the same fact.
 
-**Act 2 — `scripts/iron_condor/` (11-15) + `scripts/extensions/` (16-50): drop
-the long-premium thesis, sell the option instead.** A delta-selected iron
-condor with a Donchian buy-stop hedge, tested against the same holdout
-discipline, then stress-tested by the 35-script robustness battery.
+## 6. The mirror trade
 
-**4. The mirror trade, run over the same two periods:**
+Having found nothing on the long-premium side, the natural adversarial
+question is whether the opposite trade — selling premium instead of buying
+it, structured as a delta-selected iron condor with a Donchian buy-stop
+used as a hedge rather than an entry signal — does any better, tested under
+the same locked-holdout discipline:
 
 ![Iron condor equity curve, strong in-sample then negative in 2026](docs/img/ic_equity_curves.png)
 
-| Arm | 2025 (in-sample) | 2026 YTD (holdout) |
+| | 2025 (in-sample) | 2026 YTD (holdout) |
 |---|---:|---:|
-| IC blind | +₹172,572 | −₹128,239 |
-| + hedge 1x | +₹440,506 | −₹136,574 |
-| + hedge 2x | +₹726,092 | −₹138,490 |
-| + hedge 3x | +₹1,011,681 | −₹140,405 |
+| Blind condor | +₹172,572 | −₹128,239 |
+| + hedge, 1x | +₹440,506 | −₹136,574 |
+| + hedge, 2x | +₹726,092 | −₹138,490 |
+| + hedge, 3x | +₹1,011,681 | −₹140,405 |
 
-Strongly positive in 2025, negative at every hedge multiplier the moment it
-meets 2026 — and it gets worse in absolute terms as the hedge multiplier goes
-up, which is what added gross exposure looks like, not what a hedge looks
-like.
+The result reverses sign completely between the two periods, and does so
+more sharply as the hedge is scaled up — a bigger 2025 gain paired with a
+bigger 2026 loss, which is the signature of added gross exposure rather
+than of a hedge doing its job.
 
-**5. Before taking that reversal at face value, the robustness battery checks
-the two obvious objections.** Is it just a pessimistic cost assumption
-(`extensions/16-19, 31, 35, 47`)?
+## 7. Ruling out the two easy explanations
+
+A reversal this clean invites two specific objections before it can be
+taken at face value. The first is whether it is simply an artifact of
+whatever slippage was assumed:
 
 ![Sharpe vs slippage, IC blind: 2026 negative even before slippage](docs/img/slippage_sweep.png)
 
-No — the 2026 curve is already Sharpe-negative at zero assumed slippage,
-so no slippage number rescues it. And is the hedge itself picking up a
-forward-looking leak (`iron_condor/14`'s rotation placebo)?
+It is not — the holdout period is already Sharpe-negative at zero assumed
+slippage, so no more forgiving cost assumption rescues it. The second
+objection is whether the hedge itself is quietly exploiting a forward-look
+in how it is gated:
 
 | Hedge-gate placebo | pts | trades | win rate |
 |---|---:|---:|---:|
@@ -118,15 +157,48 @@ forward-looking leak (`iron_condor/14`'s rotation placebo)?
 | Random gate | −0.32 | — | — |
 | Deliberately leaked gate | −9.21 | — | — |
 
-No — the clean gate's attribution sits near zero and looks nothing like the
-leaked one. Neither objection explains the reversal, which leaves the
-uncomfortable one: the `0.35/0.15` config and `optg` hedge style behind the
-equity curve above were picked from a ~30-way grid with no stated selection
-rule, and `extensions/50`'s deflated-Sharpe/PBO check exists for exactly that
-failure mode but was never run against this particular choice. Full context
-is in `docs/findings.md`.
+It is also not — the clean gate's attribution sits close to zero and looks
+nothing like the deliberately leaked one, which rules out a forward-looking
+cheat but also confirms the hedge was never adding much to begin with.
 
-## Data you need to supply
+## 8. Discussion
+
+Neither of the two easy explanations accounts for the reversal, which
+leaves the less comfortable one: the specific condor configuration and
+hedge style behind the equity curve above were selected from a grid of
+roughly thirty variants with no stated rule for the selection, which is
+precisely the setup in which the best-looking cell in a grid is often the
+one that got lucky in-sample rather than the one that generalises. A
+deflated-Sharpe and probability-of-backtest-overfitting check exists
+elsewhere in this repository for exactly that failure mode, and has not yet
+been run against this particular choice. The honest reading of the
+short-premium result is therefore "promising in-sample, not yet validated
+out of sample" rather than a second finding to set beside the falsification
+of the long-premium overlay.
+
+## 9. Conclusion
+
+A Donchian breakout, overlaid on a bought weekly NIFTY option and priced
+against real bars and real costs, does not generate alpha: the underlying
+signal shows no directional edge at any horizon or in any period tested,
+and every long-premium construction loses money in-sample and out of
+sample. The channel's width is a genuine, out-of-sample-stable forecast of
+move size, useful for position sizing but not for direction. The
+short-premium mirror trade is a cautionary complement to the main result
+rather than a rebuttal of it — a strategy that looked strong until it met
+data it hadn't been shaped by, kept honest here only because a holdout
+period existed to catch it.
+
+Full numeric results live in `results/findings.json` and
+`results/ic_findings.json`; the condensed write-up is in
+`docs/findings.md`.
+
+## Appendix: running the code
+
+The sections below are a practical reference for reproducing the result
+above, not part of the argument itself.
+
+### Data you need to supply
 
 Not bundled. Both come from the weekly Zerodha archives `YYYYMMDD.zip`
 (one per weekly expiry, LZMA-compressed):
@@ -141,7 +213,7 @@ Point `DL_DIR` at the folder holding the archives (defaults to
 `~/mnt/Downloads`) and `STORE_DIR` at where the derived store should live
 (defaults to `~/scratch/store`).
 
-## Running it
+### Running it
 
 ```
 python3 scripts/core/01_build_store.py          # spot parquet + option index
@@ -164,7 +236,7 @@ the same schema and runs 01-08 end to end -- no real data required, no
 assertion on trading results, just a check that the pipeline still runs
 after a dependency bump or a refactor.
 
-## What each Act 2 script tests
+### What the extension scripts test
 
 Act 2's 35 scripts, grouped by what they check:
 
@@ -187,7 +259,7 @@ Act 2's 35 scripts, grouped by what they check:
 Headline numbers from both bodies of work are synthesised in
 `docs/findings.md`.
 
-## Layout
+### Layout
 
 - `lib/core.py` — data loading, 5-minute resampling, day-scoped Donchian
   signals, the 1-minute-path trade simulator, day-clustered bootstrap.
@@ -213,7 +285,7 @@ Headline numbers from both bodies of work are synthesised in
 - `docs/` — the synthesised write-up.
 - `tests/` — a smoke test covering `scripts/core/`.
 
-## Method notes
+### Method notes
 
 - The channel at bar *i* uses the *N* bars strictly before *i*, within the same
   session (`shift(1)` before `rolling`). Script 09 proves this with a placebo
