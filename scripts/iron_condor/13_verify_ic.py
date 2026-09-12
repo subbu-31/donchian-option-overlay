@@ -14,11 +14,9 @@ Three checks:
 """
 import math
 import os
-import sys
 import zipfile
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 STORE = Path(os.environ.get("STORE_DIR", Path.home() / "scratch" / "store"))

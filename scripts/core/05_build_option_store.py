@@ -6,8 +6,6 @@ need out of the 73 weekly LZMA archives into one parquet per expiry.
 Expiry mapping honours the standing no-0-DTE rule: a session trades the
 nearest weekly expiry STRICTLY after that session's date.
 """
-import json
-import re
 import sys
 import zipfile
 from pathlib import Path

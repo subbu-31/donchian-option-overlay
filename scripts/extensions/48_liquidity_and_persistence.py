@@ -111,7 +111,7 @@ g = w[w.cfg == "0.25/0.1"].sort_values("date")
 g["hs"] = g.slip / (8 * QTY)
 x = np.arange(len(g)); bb, se, tt, pp, r2 = ols_hc1(g.hs.to_numpy(float),
                                                     np.column_stack([np.ones(len(x)), x]))
-print(f"\n  MECHANISM CHECK -- modelled half-spread over time (0.25/0.10):")
+print("\n  MECHANISM CHECK -- modelled half-spread over time (0.25/0.10):")
 print(f"    {g.hs.head(60).mean():.4f} pts/leg/side (first 60 sessions) -> "
       f"{g.hs.tail(60).mean():.4f} (last 60)")
 print(f"    trend {bb[1]*1000:+.4f} pts per 1000 sessions, t = {tt[1]:.2f}, p = {pp[1]:.3f}")

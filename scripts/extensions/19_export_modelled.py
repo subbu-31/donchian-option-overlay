@@ -21,7 +21,6 @@ def main():
     d = d[d.year.isin([2025, 2026])].sort_values("date").reset_index(drop=True)
     sp = pd.read_csv(STORE / "spread_estimates.csv")
     sp["year"] = pd.to_datetime(sp["date"]).dt.year
-    hl = pd.read_csv(STORE / "hold_longer.csv")
 
     def hedge(mult):
         hp = d["hoptg_pnl"].fillna(0) * QTY * mult

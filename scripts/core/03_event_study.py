@@ -22,7 +22,6 @@ breakout being a worse-than-average moment to take that side.
 Inference is day-clustered (whole sessions resampled), because breakouts on
 the same session are not independent draws.
 """
-import json
 import sys
 from pathlib import Path
 

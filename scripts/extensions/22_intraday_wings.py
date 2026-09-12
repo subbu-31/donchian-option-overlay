@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from lib.core import STORE, load_spot
+from lib.core import STORE
 from lib.spread import half_spread_rupees
 import lib.ic_costs as IC
 
@@ -28,7 +28,6 @@ def main():
     d = pd.read_csv(STORE / "ic_donchian_daily.csv")
     d["year"] = pd.to_datetime(d["date"]).dt.year
     d = d[d.year.isin([2025, 2026])]
-    spot = load_spot()
 
     # per-leg half spread on the holding window, per row
     slips = []

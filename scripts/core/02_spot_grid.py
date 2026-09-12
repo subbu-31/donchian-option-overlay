@@ -13,7 +13,6 @@ uniformly from the same window.  That control absorbs index drift and the
 day's realised volatility, so what is left is the value of the breakout
 TIMING itself.
 """
-import json
 import sys
 from pathlib import Path
 
@@ -22,7 +21,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from lib.core import (STORE, load_spot, to_5m, donchian_signals, dedupe_signals,
-                      simulate, prep_days, summarise, block_bootstrap_ci)
+                      simulate, prep_days, summarise)
 
 DESIGN_YEARS = [2024]
 NS = [6, 9, 12, 18, 24, 36]

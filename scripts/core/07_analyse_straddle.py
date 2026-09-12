@@ -12,7 +12,6 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from lib.core import STORE
-from lib.costs import LOT
 
 
 def dcci(df, col, n_boot=2000, seed=17):
@@ -45,7 +44,6 @@ def block(tr, label, h):
 def main():
     tr = pd.read_parquet(STORE / "straddle_trades.parquet").dropna(subset=["width_rel"])
     is_ = tr[tr["year"] == 2025]
-    oos = tr[tr["year"] == 2026]
     cuts = np.quantile(is_["width_rel"], [0.2, 0.4, 0.6, 0.8])
     print(f"width_rel quintile cut points fitted on 2025: "
           f"{np.round(cuts, 3).tolist()}   (1.0 = a normal-width channel for that time of day)")

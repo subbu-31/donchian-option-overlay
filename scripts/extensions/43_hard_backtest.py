@@ -229,8 +229,8 @@ def main():
     logits = np.array(logits)
     pbo = float((logits <= 0).mean())
     print(f"  splits {len(logits)}   PBO = {pbo:.3f}   median logit {np.median(logits):+.2f}")
-    print(f"  reading: PBO is the chance the in-sample-best variant lands below the")
-    print(f"           OOS median.  <0.10 is clean, >0.50 means the selection is noise.")
+    print("  reading: PBO is the chance the in-sample-best variant lands below the")
+    print("           OOS median.  <0.10 is clean, >0.50 means the selection is noise.")
 
     # ================= T4 : live lookback selection =================
     print("\n" + "=" * 78)

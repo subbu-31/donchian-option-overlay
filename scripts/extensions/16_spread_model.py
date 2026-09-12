@@ -16,7 +16,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from lib.core import STORE, load_spot
-from lib.spread import half_spread_rupees, corwin_schultz, abdi_ranaldo, zero_change_fraction, TICK
+from lib.spread import half_spread_rupees, corwin_schultz, abdi_ranaldo, zero_change_fraction
 
 OPT = STORE / "opt2"
 ENTRY_T, EXIT_T = pd.Timestamp("09:45").time(), pd.Timestamp("15:00").time()
@@ -101,7 +101,7 @@ def main():
           f"{per_day.median()/8:.4f} pts per leg per side")
     print(f"  mean   modelled equivalent flat slippage = "
           f"{per_day.mean()/8:.4f} pts per leg per side")
-    print(f"  (the tearsheet's swept ladder used 0.00 / 0.10 / 0.25 / 0.50)")
+    print("  (the tearsheet's swept ladder used 0.00 / 0.10 / 0.25 / 0.50)")
     return 0
 
 

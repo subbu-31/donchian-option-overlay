@@ -1,6 +1,5 @@
 """Causal, look-ahead-free features attached to every 5-minute bar."""
 import numpy as np
-import pandas as pd
 
 
 def add_features(bars5, n):

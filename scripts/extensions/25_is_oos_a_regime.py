@@ -47,7 +47,6 @@ def report(name, pnl25, target, n_oos=N_OOS):
 
 
 def main():
-    d = pd.read_csv(STORE / "regime_decomp.csv")
     out = {}
     for cfg_name, path, col in (("condor 0.35/0.15", "intraday_wings.csv", "net"),):
         w = pd.read_csv(STORE / path)

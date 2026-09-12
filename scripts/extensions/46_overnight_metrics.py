@@ -50,8 +50,8 @@ for a, b, nm in [("strad_on", "strad_day", "straddle"), ("condor_on", "condor_da
 print("\n3) IS THE OVERNIGHT WINDOW OVERPRICED? (secondary read)")
 r = (d.real_move_on / d.imp_move_on).dropna()
 print(f"  realised / implied overnight move: mean {r.mean():.3f}  median {r.median():.3f}")
-print(f"  unbiased benchmark sqrt(2/pi) = 0.798")
-print(f"  intraday benchmark from the width study: 0.286 (narrow) .. 0.650 (wide), mean ~0.44")
+print("  unbiased benchmark sqrt(2/pi) = 0.798")
+print("  intraday benchmark from the width study: 0.286 (narrow) .. 0.650 (wide), mean ~0.44")
 print(f"  -> overnight sits {'ABOVE' if r.mean()>0.44 else 'BELOW'} the intraday band, i.e. "
       f"{'LESS' if r.mean()>0.44 else 'MORE'} overpriced than the day session")
 print(f"  realised move: overnight {d.real_move_on.mean():.1f} pts vs day {d.real_move_day.mean():.1f} pts"

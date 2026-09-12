@@ -13,7 +13,6 @@ It also runs three look-ahead audits:
   2. entry timestamps must all be strictly after their signal bar's close;
   3. exit timestamps must all be after entry.
 """
-import io
 import os
 import random
 import sys
@@ -138,7 +137,7 @@ def main():
     print("CHECK 3  placebo -- channel deliberately leaked to the N bars AFTER it")
     print("=" * 88)
     print("  If the real pipeline were leaking, its edge would look like the placebo's.")
-    from lib.core import load_spot, to_5m, donchian_signals
+    from lib.core import load_spot, to_5m
     spot = load_spot()
     spot["year"] = pd.to_datetime(spot["date"]).dt.year
     sub = spot[spot["year"] == 2025].reset_index(drop=True)

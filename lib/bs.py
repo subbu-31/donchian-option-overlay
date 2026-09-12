@@ -6,8 +6,6 @@ from a later intraday snapshot.
 """
 import math
 
-import numpy as np
-
 RF = 0.065          # risk-free rate used throughout
 YEAR = 365.0
 
