@@ -27,7 +27,7 @@ placebo checks) exists in the first place.
 Full result: `results/findings.json`, and the write-up in
 `docs/findings.md`.
 
-## Results at a glance
+## Two acts, in the order the code runs them
 
 | | |
 |---|---|
@@ -37,21 +37,27 @@ Full result: `results/findings.json`, and the write-up in
 | Design / in-sample / holdout | 2024 / 2025 / Jan–May 2026 (locked) |
 | Inference | day-clustered bootstrap throughout |
 
-**Start with the signal itself: does price keep moving after a breakout? Not at any horizon tested, in any period:**
+**Act 1 — `scripts/core/` (01-10): does the long-premium overlay work?** Build
+the signal on spot alone, then price it against a real option, then check
+whether anything survives the checking.
+
+**1. Is there a directional edge in the breakout itself, before any option
+touches it?** (`02_spot_grid.py`, `03_event_study.py` — 2024 design sample,
+spot points only, no options collected for 2024 so nothing here could have
+seen 2025 or 2026):
 
 ![Breakout continuation: no signal at any horizon, any period](docs/img/event_study.png)
 
-**Every long-premium arm loses money, in-sample and out of sample:**
+No. Not at any forward horizon, in any of the three periods. `04_conditioning.py`
+runs the same question as a 93-cell grid over other conditioning variables in
+the design sample — 5 came back significant at the 5% level, against 4.7
+expected from chance alone.
+
+**2. Price it against a real option anyway** (`05_build_option_store.py`
+through `08_daily_arms.py` — 54,275 legs, real 1-minute bars, full Zerodha
+cost stack):
 
 ![Every long-premium arm loses money, both periods](docs/img/daily_arms.png)
-
-**The one thing that survives — channel width forecasts the next move's size, and it holds up on data the cut points never saw:**
-
-![Channel width forecasts range, holds out of sample](docs/img/width_signal.png)
-
-**Not for lack of trying to find a directional edge — 93 conditioning cells tested in the design sample, and the hit rate is exactly what noise would produce:**
-
-![Q1 direction grid: 5 significant cells found vs 4.7 expected by chance](docs/img/q1_significance.png)
 
 | | |
 |---|---:|
@@ -59,7 +65,28 @@ Full result: `results/findings.json`, and the write-up in
 | Clean forward-move placebo, 2,068 events | −0.53 pts (wrong sign, ≈0) |
 | Deliberately leaked placebo, 179 events | −49.95 pts (proves the pipeline isn't leaking) |
 
-**The short-premium extension (iron condor) looked like the answer — until its own holdout:**
+All three arms lose money in both periods. Costs matter but aren't the whole
+story — even at zero cost the mean move doesn't flip sign, and the leak
+placebo confirms this isn't an artifact of an accidentally forward-looking
+signal.
+
+**3. Does anything survive?** (`04_conditioning.py`'s Q2, `06`/`07` sorted by
+width quintile) — yes, one thing:
+
+![Channel width forecasts range, holds out of sample](docs/img/width_signal.png)
+
+The channel's width relative to the same time of day over the prior 20
+sessions forecasts the size of the next move, in-sample and on the 2026
+holdout. It's a sizing input, not a directional edge — the option market
+already prices that same volatility information into the premium, which is
+exactly why buying premium conditioned on width is still a wash.
+
+**Act 2 — `scripts/iron_condor/` (11-15) + `scripts/extensions/` (16-50): drop
+the long-premium thesis, sell the option instead.** A delta-selected iron
+condor with a Donchian buy-stop hedge, tested against the same holdout
+discipline, then stress-tested by the 35-script robustness battery.
+
+**4. The mirror trade, run over the same two periods:**
 
 ![Iron condor equity curve, strong in-sample then negative in 2026](docs/img/ic_equity_curves.png)
 
@@ -70,24 +97,20 @@ Full result: `results/findings.json`, and the write-up in
 | + hedge 2x | +₹726,092 | −₹138,490 |
 | + hedge 3x | +₹1,011,681 | −₹140,405 |
 
-More hedge means a bigger 2025 gain *and* a bigger 2026 loss — that's what added gross exposure looks like, not what a hedge looks like.
+Strongly positive in 2025, negative at every hedge multiplier the moment it
+meets 2026 — and it gets worse in absolute terms as the hedge multiplier goes
+up, which is what added gross exposure looks like, not what a hedge looks
+like.
 
-**Same picture month by month — a strong start, then mostly red once the holdout begins:**
-
-![IC blind monthly P&L, mixed 2025 then mostly negative in 2026](docs/img/ic_monthly.png)
-
-**And it isn't a slippage assumption doing the damage — the 2026 line starts below zero at zero assumed slippage:**
+**5. Before taking that reversal at face value, the robustness battery checks
+the two obvious objections.** Is it just a pessimistic cost assumption
+(`extensions/16-19, 31, 35, 47`)?
 
 ![Sharpe vs slippage, IC blind: 2026 negative even before slippage](docs/img/slippage_sweep.png)
 
-| Breakeven slippage (pts) | 2025 (in-sample) | 2026 (holdout) |
-|---|---:|---:|
-| IC blind | 0.217 | 0.000 |
-| + hedge 1x | 0.317 | 0.000 |
-| + hedge 2x | 0.380 | 0.000 |
-| + hedge 3x | 0.421 | 0.000 |
-
-No slippage assumption rescues the 2026 result — the breakeven point is at or below zero for every hedge level.
+No — the 2026 curve is already Sharpe-negative at zero assumed slippage,
+so no slippage number rescues it. And is the hedge itself picking up a
+forward-looking leak (`iron_condor/14`'s rotation placebo)?
 
 | Hedge-gate placebo | pts | trades | win rate |
 |---|---:|---:|---:|
@@ -95,7 +118,13 @@ No slippage assumption rescues the 2026 result — the breakeven point is at or 
 | Random gate | −0.32 | — | — |
 | Deliberately leaked gate | −9.21 | — | — |
 
-The clean gate's attribution is close to zero and nothing like the leaked one — the hedge isn't picking up a forward-looking cheat, it just isn't adding much either. Full context, including the unexplained config selection the equity-curve table above is built on, is in `docs/findings.md`.
+No — the clean gate's attribution sits near zero and looks nothing like the
+leaked one. Neither objection explains the reversal, which leaves the
+uncomfortable one: the `0.35/0.15` config and `optg` hedge style behind the
+equity curve above were picked from a ~30-way grid with no stated selection
+rule, and `extensions/50`'s deflated-Sharpe/PBO check exists for exactly that
+failure mode but was never run against this particular choice. Full context
+is in `docs/findings.md`.
 
 ## Data you need to supply
 
@@ -135,13 +164,9 @@ the same schema and runs 01-08 end to end -- no real data required, no
 assertion on trading results, just a check that the pipeline still runs
 after a dependency bump or a refactor.
 
-## Beyond the core pipeline (`scripts/iron_condor/`, `scripts/extensions/`)
+## What each Act 2 script tests
 
-`scripts/core/` (01-10) tests and rejects the long-premium Donchian overlay.
-`scripts/iron_condor/` (11-15) and `scripts/extensions/` (16-50) are a
-separate, larger body of work: they drop the long-premium thesis and test
-short-premium structures (iron condors, naked strangles) plus a battery of
-robustness checks. Grouped by what they test:
+Act 2's 35 scripts, grouped by what they check:
 
 | Scripts | Theme |
 |---|---|

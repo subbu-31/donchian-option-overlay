@@ -1,6 +1,6 @@
-"""Renders the three README charts from committed results/ data. Not part
-of the pipeline -- run from the repo root after results/ changes, commit
-the regenerated PNGs: python3 docs/make_charts.py"""
+"""Renders the README charts from committed results/ data. Not part of the
+pipeline -- run from the repo root after results/ changes, commit the
+regenerated PNGs: python3 docs/make_charts.py"""
 import json
 from datetime import datetime
 from pathlib import Path
@@ -118,49 +118,6 @@ fig.savefig(f"{ROOT}/docs/img/width_signal.png")
 plt.close(fig)
 
 # ---------------------------------------------------------------- chart 4
-# IC blind monthly P&L, colored by sign, IS/OOS split marked.
-monthly = ic["monthly"]["IC blind"]
-months = sorted(monthly.keys())
-vals = [monthly[m] for m in months]
-fig, ax = plt.subplots(figsize=(9, 4.5), dpi=160)
-colors = [BLUE if v >= 0 else RED for v in vals]
-ax.bar(range(len(months)), vals, color=colors, width=0.7)
-split_idx = months.index("2026-01")
-ax.axvline(split_idx - 0.5, color="#999999", linestyle="--", linewidth=1)
-ax.text(split_idx - 0.5, max(vals) * 1.02, "  2026 holdout →", color="#666666", fontsize=9, va="bottom")
-ax.axhline(0, color="#444444", linewidth=0.8)
-ax.set_xticks(range(len(months)))
-ax.set_xticklabels([m[2:] for m in months], rotation=45, ha="right", fontsize=8.5)
-ax.set_ylabel("Monthly P&L (₹, IC blind, 10 lots)")
-ax.yaxis.set_major_formatter(lambda x, _: f"{x/1000:,.0f}k")
-ax.set_title("Blind condor month by month: mixed 2025, red most months since", fontsize=13, color=INK, pad=12)
-ax.spines[["top", "right"]].set_visible(False)
-fig.tight_layout()
-fig.savefig(f"{ROOT}/docs/img/ic_monthly.png")
-plt.close(fig)
-
-# ---------------------------------------------------------------- chart 5
-# Q1 conditioning grid: significant cells found vs. expected by chance.
-q1 = findings["q1_summary"]
-fig, ax = plt.subplots(figsize=(5.5, 4.5), dpi=160)
-xs = [1, 2]
-bars = ax.bar(xs, [q1["significant_2024"], q1["expected_by_chance"]], width=0.5,
-              color=[GOLD, GREY])
-ax.set_xticks(xs)
-ax.set_xticklabels(["Found\nsignificant", "Expected\nby chance\n(5% level)"])
-for b, v in zip(bars, [q1["significant_2024"], q1["expected_by_chance"]]):
-    ax.text(b.get_x() + b.get_width() / 2, v + 0.08, f"{v:g}", ha="center", va="bottom",
-            fontsize=11, color="#222222")
-ax.set_ylim(0, max(q1["significant_2024"], q1["expected_by_chance"]) * 1.4)
-ax.set_ylabel("Cells")
-ax.set_title(f"Q1 direction grid: {q1['cells_tested_2024']} cells tested,\n"
-             "result indistinguishable from chance", fontsize=12.5, color=INK, pad=12)
-ax.spines[["top", "right"]].set_visible(False)
-fig.tight_layout()
-fig.savefig(f"{ROOT}/docs/img/q1_significance.png")
-plt.close(fig)
-
-# ---------------------------------------------------------------- chart 6
 # Forward-move by horizon (n=12), one line per period, showing no
 # directional continuation anywhere except a small reversal at h=5 in 2025.
 es = [r for r in findings["event_study"] if r["n"] == 12]
@@ -185,7 +142,7 @@ fig.tight_layout()
 fig.savefig(f"{ROOT}/docs/img/event_study.png")
 plt.close(fig)
 
-# ---------------------------------------------------------------- chart 7
+# ---------------------------------------------------------------- chart 5
 # Sharpe vs. slippage sweep for the blind condor: 2026 never breaks even.
 ss = [r for r in ic["slip_surface"] if r["arm"] == "IC blind"]
 fig, ax = plt.subplots(figsize=(8, 5), dpi=160)
@@ -205,4 +162,4 @@ fig.tight_layout()
 fig.savefig(f"{ROOT}/docs/img/slippage_sweep.png")
 plt.close(fig)
 
-print("wrote 7 charts to docs/img/")
+print("wrote 5 charts to docs/img/")
