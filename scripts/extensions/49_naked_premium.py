@@ -69,7 +69,7 @@ def path_mae(day, legs, t0, t1, credit):
         if g.empty: continue
         s = g["c"].reindex(grid).ffill(limit=5)
         if s.notna().sum() < len(grid) * 0.5: continue
-        tot = tot + s.fillna(method="bfill").to_numpy(float)
+        tot = tot + s.bfill().to_numpy(float)
         ok = True
     if not ok: return np.nan, np.nan
     pnl = credit - tot                      # short: profit when total premium falls

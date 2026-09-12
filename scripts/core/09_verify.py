@@ -147,10 +147,7 @@ def main():
     g = b.groupby("date")
     clean_up = g["h"].transform(lambda x: x.shift(1).rolling(N).max())
     clean_dn = g["l"].transform(lambda x: x.shift(1).rolling(N).min())
-    # leaked: channel built from the N bars strictly AFTER the signalling bar --
-    # shift(-1) alone would still fold the signalling bar's own high/low into
-    # the window, making a breakout against it nearly impossible (0 events).
-    # shift(-N) matches script 10's genuine forward-leak placebo.
+    # leaked: N bars strictly after the signalling bar (matches script 10)
     leak_up = g["h"].transform(lambda x: x.shift(-N).rolling(N).max())
     leak_dn = g["l"].transform(lambda x: x.shift(-N).rolling(N).min())
     t = b["ts"].dt.time

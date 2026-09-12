@@ -197,7 +197,6 @@ def walkforward(name, daily, trades, cfgs, fixed, crit="sharpe", freq="Q", min_t
 
 
 def main():
-    # ---------------- NIFTY ----------------
     f = pd.read_csv(STORE / "regime_decomp.csv")[["date", "rv"]]
     f["date"] = pd.to_datetime(f["date"])
     f = f.dropna().sort_values("date").reset_index(drop=True)
@@ -211,18 +210,6 @@ def main():
     for freq in ["Q", "M"]:
         for crit in (["sharpe", "mean"] if freq == "Q" else ["sharpe"]):
             walkforward("NIFTY", f, w, NCFG, FIXED_N, crit=crit, freq=freq)
-
-    # ---------------- BANKNIFTY ----------------
-    rv = pd.read_csv(STORE / "bn_daily_rv.csv")
-    rv["date"] = pd.to_datetime(rv["date"])
-    rv = rv.sort_values("date").reset_index(drop=True)
-    b = pd.read_csv(STORE / "banknifty_condor.csv")
-    b["date"] = pd.to_datetime(b["date"])
-    BCFG = ["0.35/0.15", "0.25/0.1"]
-    walkforward("BANKNIFTY", rv, b, BCFG, ("0.25/0.1", 20, 0.6667, "r250"),
-                crit="sharpe", freq="Q", min_train=60)
-    walkforward("BANKNIFTY", rv, b, BCFG, ("0.25/0.1", 20, 0.6667, "r250"),
-                crit="sharpe", freq="Y", min_train=60)
     return 0
 
 

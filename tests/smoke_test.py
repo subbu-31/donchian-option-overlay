@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 """
-smoke_test.py -- Pipeline smoke test.
+smoke_test.py -- pipeline smoke test, no real data required.
 
-Real Zerodha archives aren't available in CI, so this fabricates weekly
-expiry zips with the same schema (nifty_spot.csv + {strike}{CE|PE}_{expiry}.csv)
-and runs scripts 01-09 against them end to end. It does not assert on any
-trading result -- the synthetic prices are random walks with no signal in
-them -- it only asserts that the documented pipeline runs to completion
-without raising. That's enough to catch dependency-version breaks (e.g. a
-pandas resample API change) and path mismatches between scripts (e.g. one
-script writing to STORE/opt while a later one reads STORE/opt2) before they
-reach a real run.
+Fabricates weekly expiry zips with the Zerodha schema (nifty_spot.csv +
+{strike}{CE|PE}_{expiry}.csv, random-walk prices, no signal) and runs the
+core pipeline against them end to end. Asserts only that nothing raises --
+not that any number comes out right. Catches dependency breaks and stale
+path assumptions between scripts before they reach a real run.
 """
+import os
 import shutil
 import subprocess
 import sys
@@ -88,9 +85,7 @@ def main():
     store_dir.mkdir(parents=True)
     try:
         build_fake_archives(dl_dir)
-        env = {"DL_DIR": str(dl_dir), "STORE_DIR": str(store_dir), "PATH": "/usr/bin:/bin"}
-        import os
-        env["PATH"] = os.environ.get("PATH", env["PATH"])
+        env = {**os.environ, "DL_DIR": str(dl_dir), "STORE_DIR": str(store_dir)}
         for script in PIPELINE:
             print(f"--- {script} ---", flush=True)
             r = subprocess.run([sys.executable, str(ROOT / "scripts" / "core" / script)],

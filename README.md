@@ -53,7 +53,7 @@ after a dependency bump or a refactor.
 ## Beyond the core pipeline (`scripts/iron_condor/`, `scripts/extensions/`)
 
 `scripts/core/` (01-10) tests and rejects the long-premium Donchian overlay.
-`scripts/iron_condor/` (11-15) and `scripts/extensions/` (16-52) are a
+`scripts/iron_condor/` (11-15) and `scripts/extensions/` (16-50) are a
 separate, larger body of work: they drop the long-premium thesis and test
 short-premium structures (iron condors, naked strangles) plus a battery of
 robustness checks. Grouped by what they test:
@@ -64,12 +64,11 @@ robustness checks. Grouped by what they test:
 | `extensions/` 16-19 | Spread/slippage cost modelling for the option legs |
 | `extensions/` 20-22 | Weekly (vs. daily) holding period, intraday wing behaviour |
 | `extensions/` 23-25 | Regime features, regime decomposition, whether IS/OOS split is itself a regime effect |
-| `extensions/` 26, 30, 42, 51-52 | BankNifty replication of the NIFTY results (condor and naked) |
 | `extensions/` 27-29, 33, 37 | Forecast panels/regression on vol and term structure |
 | `extensions/` 31, 35, 47 | Cost audit, slippage ladder, time-of-day cost |
 | `extensions/` 32, 34 | Term structure, VRP (variance risk premium) state |
 | `extensions/` 36, 38 | Skew panel and skew conditioning |
-| `extensions/` 39, 42 | Volatility-regime gating |
+| `extensions/` 39 | Volatility-regime gating |
 | `extensions/` 40-41 | Adversarial stress tests and confound checks |
 | `extensions/` 43-44 | A harder backtest and a walk-forward that picks structure from past data only |
 | `extensions/` 45-46, 48 | Overnight gap behaviour, liquidity/persistence |
@@ -86,11 +85,18 @@ Headline numbers from both bodies of work are synthesised in
   bar-of-day over the prior 20 sessions, breakout extension, opening-range
   expansion, overnight gap.
 - `lib/costs.py` / `lib/ic_costs.py` — Zerodha round-trip cost models
-  (brokerage, STT, exchange charge, SEBI, stamp, GST, slippage), the
-  latter date-aware across the statutory-rate changes in the sample.
+  (brokerage, STT, exchange charge, SEBI, stamp, GST, slippage). `costs.py`
+  holds the rates flat (used only by `scripts/core/`, whose sample sits
+  almost entirely inside one statutory regime -- see
+  `scripts/extensions/31_cost_audit.py` for the quantified effect of that
+  simplification); `ic_costs.py` is date-aware across the statutory-rate
+  changes and is what everything from `scripts/iron_condor/` onward uses.
 - `scripts/core/` — the ten-script falsification pipeline (see above).
 - `scripts/iron_condor/` — the delta-selected condor + hedge, and its export.
-- `scripts/extensions/` — the wider robustness/regime/other-market battery.
+- `scripts/extensions/` — the wider robustness/regime/other-market battery,
+  numbered 16-50. Five numbers in that range (26, 30, 42, 51, 52) were
+  BankNifty replication scripts, removed once the project's scope settled
+  on NIFTY only -- the gap is deliberate, not a missing file.
 - `audit/` — independent, from-scratch reimplementations used to cross-check
   the main pipeline.
 - `results/` — `findings.json` / `ic_findings.json` plus the per-test CSVs.

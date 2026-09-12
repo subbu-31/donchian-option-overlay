@@ -1,4 +1,13 @@
-"""Zerodha NIFTY-options round-trip cost model, in rupees per lot."""
+"""Zerodha NIFTY-options round-trip cost model, in rupees per lot.
+
+Rates are held FLAT, not date-aware -- unlike lib/ic_costs.py, which the
+iron-condor pipeline (scripts/iron_condor/ onward) uses instead because its
+sample spans multiple statutory-rate regimes. This module is only used by
+scripts/core/, whose 2024-2026 sample sits almost entirely inside one STT/
+exchange-charge regime; scripts/extensions/31_cost_audit.py re-prices the
+same trades under the date-aware schedule and quantifies the (small) effect
+of that simplification rather than assuming it away.
+"""
 LOT = 75
 BROKERAGE = 20.0          # flat per executed order
 STT_SELL = 0.0010         # 0.10% of premium, sell side only

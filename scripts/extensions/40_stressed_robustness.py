@@ -9,7 +9,6 @@ first conditioner to do so.  Before that can be traded it has to survive:
   (c) moving the rv20 lookback (10 / 20 / 30 / 40 sessions)
   (d) removing the best sessions -- is it a handful of days again?
   (e) a month-by-month read of the 2026 holdout
-  (f) the same gate applied to BANKNIFTY 2018-2026, a genuinely untouched sample
 """
 import sys
 from math import erf, sqrt
