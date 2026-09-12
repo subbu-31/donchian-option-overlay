@@ -35,7 +35,7 @@ python3 scripts/core/02_spot_grid.py            # 2024 design grid vs random-ent
 python3 scripts/core/03_event_study.py          # conditional vs unconditional forward move
 python3 scripts/core/04_conditioning.py         # Q1 direction conditioners, Q2 width -> move size
 python3 scripts/core/05_build_option_store.py   # extract near-the-money legs (~257 MB)
-python3 scripts/core/06_straddle_by_width.py    # price 53,627 ATM straddles on real bars
+python3 scripts/core/06_straddle_by_width.py    # price ~54,000 ATM straddles on real bars
 python3 scripts/core/07_analyse_straddle.py     # sort by width quintile, IS/OOS
 python3 scripts/core/08_daily_arms.py           # three arms, one decision per session
 python3 scripts/core/09_verify.py               # independent re-pricing + look-ahead audit
