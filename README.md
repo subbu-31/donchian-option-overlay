@@ -30,6 +30,16 @@ Full result: `results/findings.json`, and the write-up in
 
 ![Channel width forecasts range, holds out of sample](docs/img/width_signal.png)
 
+**Not for lack of trying to find a directional edge — 93 conditioning cells tested in the design sample, and the hit rate is exactly what noise would produce:**
+
+![Q1 direction grid: 5 significant cells found vs 4.7 expected by chance](docs/img/q1_significance.png)
+
+| | |
+|---|---:|
+| Straddle round-trip cost | 3.79 pts (1.54% of premium) |
+| Clean forward-move placebo, 2,068 events | −0.53 pts (wrong sign, ≈0) |
+| Deliberately leaked placebo, 179 events | −49.95 pts (proves the pipeline isn't leaking) |
+
 **The short-premium extension (iron condor) looked like the answer — until its own holdout:**
 
 ![Iron condor equity curve, strong in-sample then negative in 2026](docs/img/ic_equity_curves.png)
@@ -41,7 +51,19 @@ Full result: `results/findings.json`, and the write-up in
 | + hedge 2x | +₹726,092 | −₹138,490 |
 | + hedge 3x | +₹1,011,681 | −₹140,405 |
 
-More hedge means a bigger 2025 gain *and* a bigger 2026 loss — that's what added gross exposure looks like, not what a hedge looks like. Full context, including the unexplained config selection this table is built on, is in `docs/findings.md`.
+More hedge means a bigger 2025 gain *and* a bigger 2026 loss — that's what added gross exposure looks like, not what a hedge looks like.
+
+**Same picture month by month — a strong start, then mostly red once the holdout begins:**
+
+![IC blind monthly P&L, mixed 2025 then mostly negative in 2026](docs/img/ic_monthly.png)
+
+| Hedge-gate placebo | pts | trades | win rate |
+|---|---:|---:|---:|
+| Clean (real gate) | +0.97 | 518 | 39.6% |
+| Random gate | −0.32 | — | — |
+| Deliberately leaked gate | −9.21 | — | — |
+
+The clean gate's attribution is close to zero and nothing like the leaked one — the hedge isn't picking up a forward-looking cheat, it just isn't adding much either. Full context, including the unexplained config selection the equity-curve table above is built on, is in `docs/findings.md`.
 
 ## Data you need to supply
 
