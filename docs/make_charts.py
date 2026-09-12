@@ -160,4 +160,49 @@ fig.tight_layout()
 fig.savefig(f"{ROOT}/docs/img/q1_significance.png")
 plt.close(fig)
 
-print("wrote 5 charts to docs/img/")
+# ---------------------------------------------------------------- chart 6
+# Forward-move by horizon (n=12), one line per period, showing no
+# directional continuation anywhere except a small reversal at h=5 in 2025.
+es = [r for r in findings["event_study"] if r["n"] == 12]
+fig, ax = plt.subplots(figsize=(8, 5), dpi=160)
+period_colors = {"2024 design": GREY, "2025 in-sample": BLUE, "2026 holdout": RED}
+for period, color in period_colors.items():
+    rows = sorted([r for r in es if r["period"] == period], key=lambda r: r["h"])
+    hs = [r["h"] for r in rows]
+    means = [r["excess_mean"] for r in rows]
+    lo = [r["ci_lo"] for r in rows]
+    hi = [r["ci_hi"] for r in rows]
+    ax.plot(hs, means, "o-", color=color, label=period, linewidth=1.6, markersize=4)
+    ax.fill_between(hs, lo, hi, color=color, alpha=0.12)
+
+ax.axhline(0, color="#444444", linewidth=0.8)
+ax.set_xlabel("Forward horizon after breakout (minutes)")
+ax.set_ylabel("Excess forward move vs. baseline (pts, 95% CI)")
+ax.set_title("Breakout continuation: no signal at any horizon, any period", fontsize=13, color=INK, pad=12)
+ax.legend(loc="upper left", frameon=False, fontsize=9)
+ax.spines[["top", "right"]].set_visible(False)
+fig.tight_layout()
+fig.savefig(f"{ROOT}/docs/img/event_study.png")
+plt.close(fig)
+
+# ---------------------------------------------------------------- chart 7
+# Sharpe vs. slippage sweep for the blind condor: 2026 never breaks even.
+ss = [r for r in ic["slip_surface"] if r["arm"] == "IC blind"]
+fig, ax = plt.subplots(figsize=(8, 5), dpi=160)
+for period, color in (("2025 in-sample", BLUE), ("2026 holdout", RED)):
+    rows = sorted([r for r in ss if r["period"] == period], key=lambda r: r["slip"])
+    ax.plot([r["slip"] for r in rows], [r["sharpe"] for r in rows], "o-",
+            color=color, label=period, linewidth=1.6, markersize=4)
+
+ax.axhline(0, color="#444444", linewidth=0.8)
+ax.set_xlabel("Assumed slippage (pts per leg per side)")
+ax.set_ylabel("Sharpe (IC blind)")
+ax.set_title("Not a slippage artifact — 2026 is negative before any slippage is assumed",
+             fontsize=12.5, color=INK, pad=12)
+ax.legend(loc="upper right", frameon=False, fontsize=9)
+ax.spines[["top", "right"]].set_visible(False)
+fig.tight_layout()
+fig.savefig(f"{ROOT}/docs/img/slippage_sweep.png")
+plt.close(fig)
+
+print("wrote 7 charts to docs/img/")

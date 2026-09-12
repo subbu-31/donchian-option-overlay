@@ -1,13 +1,28 @@
 # Donchian + option-buying overlay — a falsification study
 
-Tests whether a day-scoped Donchian channel breakout on 5-minute NIFTY 50 bars,
-overlaid with a bought weekly option leg, generates alpha.
+**The question:** does a Donchian channel breakout — a popular retail signal —
+generate real alpha once it's overlaid with an actual weekly NIFTY option and
+priced against real bars and real Zerodha costs, rather than assumed on paper?
 
-**It does not.** The breakout carries no directional information, the channel's
-volatility information is already in the option price, and every long-premium
-arm tested is negative-expectancy in both the in-sample and holdout periods.
-The one component worth keeping is the channel *width* as a range forecast for
-position sizing.
+**The method:** build the breakout signal causally (no lookahead, proven by a
+placebo that deliberately breaks that rule), price every leg against real
+1-minute option data, hold out 2026 and never touch it until every cut point
+was fixed on 2025, and run inference clustered by day rather than by
+observation.
+
+**The answer: no.** The breakout carries no directional information, the
+channel's volatility information is already priced into the option, and every
+long-premium arm tested loses money in both the in-sample and holdout periods.
+The one thing that survives is the channel's *width* as a forecast of the next
+move's size — a sizing input, not a trading signal on its own.
+
+**Then what happened:** dropping the long-premium idea and testing the mirror
+trade — selling premium instead of buying it, via an iron condor — produced a
+strong-looking equity curve in-sample that reversed sign the moment it met its
+own holdout. That reversal is itself the more interesting result: a case study
+in what an unvalidated backtest looks like right up until it isn't, and why
+the discipline in the method above (locked holdout, day-clustered inference,
+placebo checks) exists in the first place.
 
 Full result: `results/findings.json`, and the write-up in
 `docs/findings.md`.
@@ -21,6 +36,10 @@ Full result: `results/findings.json`, and the write-up in
 | Option legs priced | 54,275 |
 | Design / in-sample / holdout | 2024 / 2025 / Jan–May 2026 (locked) |
 | Inference | day-clustered bootstrap throughout |
+
+**Start with the signal itself: does price keep moving after a breakout? Not at any horizon tested, in any period:**
+
+![Breakout continuation: no signal at any horizon, any period](docs/img/event_study.png)
 
 **Every long-premium arm loses money, in-sample and out of sample:**
 
@@ -56,6 +75,19 @@ More hedge means a bigger 2025 gain *and* a bigger 2026 loss — that's what add
 **Same picture month by month — a strong start, then mostly red once the holdout begins:**
 
 ![IC blind monthly P&L, mixed 2025 then mostly negative in 2026](docs/img/ic_monthly.png)
+
+**And it isn't a slippage assumption doing the damage — the 2026 line starts below zero at zero assumed slippage:**
+
+![Sharpe vs slippage, IC blind: 2026 negative even before slippage](docs/img/slippage_sweep.png)
+
+| Breakeven slippage (pts) | 2025 (in-sample) | 2026 (holdout) |
+|---|---:|---:|
+| IC blind | 0.217 | 0.000 |
+| + hedge 1x | 0.317 | 0.000 |
+| + hedge 2x | 0.380 | 0.000 |
+| + hedge 3x | 0.421 | 0.000 |
+
+No slippage assumption rescues the 2026 result — the breakeven point is at or below zero for every hedge level.
 
 | Hedge-gate placebo | pts | trades | win rate |
 |---|---:|---:|---:|
