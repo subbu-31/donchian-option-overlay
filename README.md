@@ -1,5 +1,9 @@
 # Donchian + option-buying overlay — a falsification study
 
+
+[![CI](https://github.com/subbu-31/donchian-option-overlay/actions/workflows/ci.yml/badge.svg)](https://github.com/subbu-31/donchian-option-overlay/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 ## Abstract
 
 The Donchian channel breakout is one of the oldest trend-following ideas in
